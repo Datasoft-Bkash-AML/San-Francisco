@@ -1,0 +1,33 @@
+/* Admin UI beautification for San-Francisco demo */
+:root{
+  --bg:#f6f7f9;
+  --card:#ffffff;
+  --muted:#70768a;
+  --accent:#3b82f6;
+  --accent-2:#b76e79;
+  --radius:12px;
+  --shadow: 0 8px 30px rgba(24,24,24,0.06);
+}
+html,body{height:100%;background:var(--bg);font-family:Inter,system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial}
+.admin.container{max-width:1200px;margin:28px auto;padding:20px}
+.admin h1{margin:0 0 8px;font-size:28px}
+.admin h2{margin-top:20px;color:#222;font-size:18px}
+.admin .top-actions{display:flex;gap:8px;justify-content:flex-end;margin-bottom:18px}
+.admin .login, .admin .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.admin form{margin:0}
+.admin .form-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.admin input[type='text'], .admin input[type='number'], .admin textarea, .admin select{border:1px solid #e6e9ef;padding:8px;border-radius:8px;background:#fff}
+.admin button{background:var(--accent);color:#fff;padding:8px 12px;border-radius:8px;border:0;cursor:pointer;font-weight:700}
+.admin button[style*='margin-left']{background:linear-gradient(90deg,var(--accent),#2563eb)}
+.admin .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;margin-top:12px}
+.admin .product-card{background:var(--card);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:8px;transition:transform .12s ease,box-shadow .12s ease}
+.admin .product-card:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(16,24,40,0.08)}
+.admin .product-card .media{height:160px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fafafa;border-radius:8px}
+.admin .product-card img{max-width:100%;max-height:100%;object-fit:cover}
+.admin .product-card .title{font-weight:800;font-family: 'Outfit',sans-serif;}
+.admin .product-card .meta{font-size:0.9rem;color:var(--muted)}
+.admin .product-card .price{font-size:1rem;color:#111;margin-top:4px;font-weight:800}
+.admin .product-card .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:var(--accent-2);color:#fff;font-weight:700;font-size:12px}
+.admin .product-card .actions{display:flex;gap:8px;align-items:center;margin-top:8px}
+.admin .small{font-size:13px;color:var(--muted)}
+.admin .admin-footer{margin-top:28px;text-align:center;color:var(--muted);font-size:13px}

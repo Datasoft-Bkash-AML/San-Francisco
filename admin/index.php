@@ -217,28 +217,24 @@ if (isset($_GET['edit'])) {
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Admin - San Francisco</title>
     <link rel="stylesheet" href="/css/style.css">
-    <style>
-        .admin{padding:24px}
-        .admin table{width:100%;border-collapse:collapse}
-        .admin th,.admin td{padding:8px;border-bottom:1px solid #eee}
-        .form-row{display:flex;gap:8px;align-items:center}
-        .form-row input, .form-row select{padding:6px}
-    </style>
+    <link rel="stylesheet" href="/admin/css/admin.css">
 </head>
 <body>
 <div class="container admin">
-    <h1>Admin Panel</h1>
-    <form method="post" style="float:right">
-        <input type="hidden" name="action" value="logout">
-        <input type="hidden" name="csrf" value="<?=htmlspecialchars(csrf_token())?>">
-        <button type="submit">Logout</button>
-    </form>
-    <form method="post" style="float:right;margin-right:8px">
-        <input type="hidden" name="action" value="seed_products">
-        <input type="hidden" name="csrf" value="<?=htmlspecialchars(csrf_token())?>">
-        <button type="submit">Seed Demo Products</button>
-    </form>
+    <div class="top-actions">
+        <form method="post" style="display:inline">
+            <input type="hidden" name="action" value="logout">
+            <input type="hidden" name="csrf" value="<?=htmlspecialchars(csrf_token())?>">
+            <button type="submit">Logout</button>
+        </form>
+        <form method="post" style="display:inline">
+            <input type="hidden" name="action" value="seed_products">
+            <input type="hidden" name="csrf" value="<?=htmlspecialchars(csrf_token())?>">
+            <button type="submit">Seed Demo Products</button>
+        </form>
+    </div>
 
+    <h1>Admin Panel</h1>
     <h2>Add / Edit Product</h2>
     <form id="admin-upload-form" method="post" enctype="multipart/form-data" style="margin-bottom:8px">
         <input type="hidden" name="csrf" value="<?=htmlspecialchars(csrf_token())?>">
@@ -277,33 +273,33 @@ if (isset($_GET['edit'])) {
     </form>
 
     <h2>Products</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:12px">
+    <div class="product-grid">
         <?php foreach ($products as $p): ?>
-            <div style="background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.06);overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:8px">
-                <div style="height:160px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fafafa;border-radius:8px">
-                    <?php if (!empty($p['image'])): 
+            <div class="product-card">
+                <div class="media">
+                    <?php if (!empty($p['image'])):
                         $imgSrc = preg_match('#^https?://#i',$p['image']) ? $p['image'] : '/images/'.htmlspecialchars($p['image']);
                     ?>
-                        <img src="<?=$imgSrc?>" style="max-width:100%;max-height:100%;object-fit:cover">
+                        <img src="<?=$imgSrc?>">
                     <?php else: ?>
                         <div style="color:#999">No image</div>
                     <?php endif; ?>
                 </div>
-                <div style="font-weight:800;font-family:'Outfit',sans-serif;"><?=htmlspecialchars($p['name'])?></div>
-                <div style="font-size:0.9rem;color:#666"><?php
+                <div class="title"><?=htmlspecialchars($p['name'])?></div>
+                <div class="meta"><?php
                     $catName = '';
                     foreach ($cats as $c) if ($c['id']==$p['category_id']) { $catName = $c['name']; break; }
                     echo htmlspecialchars($catName);
                 ?></div>
-                <div style="font-size:1rem;color:#222;font-weight:700">$<?=htmlspecialchars(isset($p['price']) ? number_format($p['price'],2) : '0.00')?></div>
                 <?php if (!empty($p['featured'])): ?>
-                    <div style="color:#b76e79;font-weight:700">FEATURED</div>
+                    <div class="badge">FEATURED</div>
                 <?php endif; ?>
-                <div style="flex:1;color:#444;font-size:0.9rem"><?=htmlspecialchars(mb_strimwidth($p['description'] ?? '',0,120,'...'))?></div>
-                <div style="display:flex;gap:8px;align-items:center">
+                <div class="small"><?=htmlspecialchars(mb_strimwidth($p['description'] ?? '',0,120,'...'))?></div>
+                <div class="price">$<?=htmlspecialchars(isset($p['price']) ? number_format($p['price'],2) : '0.00')?></div>
+                <div class="actions">
                     <a href="?edit=<?=htmlspecialchars($p['id'])?>">Edit</a>
-                    <button data-feature-toggle data-product-id="<?=htmlspecialchars($p['id'])?>" data-featured="<?=!empty($p['featured']) ? '1' : '0'?>" data-csrf="<?=htmlspecialchars(csrf_token())?>" style="margin-left:8px"><?=!empty($p['featured']) ? '★ Featured' : '☆ Feature'?></button>
-                    <form method="post" style="display:inline;margin-left:8px">
+                    <button data-feature-toggle data-product-id="<?=htmlspecialchars($p['id'])?>" data-featured="<?=!empty($p['featured']) ? '1' : '0'?>" data-csrf="<?=htmlspecialchars(csrf_token())?>"><?=!empty($p['featured']) ? '\u2605 Featured' : '\u2606 Feature'?></button>
+                    <form method="post" style="display:inline">
                         <input type="hidden" name="action" value="delete">
                         <input type="hidden" name="id" value="<?=htmlspecialchars($p['id'])?>">
                         <input type="hidden" name="csrf" value="<?=htmlspecialchars(csrf_token())?>">
