@@ -148,56 +148,5 @@ require __DIR__ . '/includes/header.php';
         <form style="display: flex; gap: 8px;">
           <input type="email" placeholder="Your email address" style="flex:1; padding: 10px 14px; border-radius: 6px; border: none; font-size: 1rem;">
           <button type="submit" style="background: #222; color: #fff; font-weight: 700; border: none; border-radius: 6px; padding: 10px 22px; font-size: 1rem; cursor: pointer;">JOIN</button>
-        </form>
       </div>
-    </div>
-  </div>
-</section>
-
-<!-- Product Grid -->
-<div id="products" class="elementor-section elementor-section-boxed" style="background: #fafafa;">
-  <div class="elementor-container" style="max-width: 1200px; margin: 0 auto;">
-    <h2 class="elementor-heading-title" style="font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 700; color: #222; margin: 32px 0 16px 0; text-align: center; letter-spacing: 1px;">Featured Products</h2>
-    <div class="products elementor-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 32px; padding: 32px 0;">
-      <?php
-      $babuiImages = [
-        '12-330x361.jpg', '13-330x361.jpg', '2-936x1024.jpg', '25-330x361.jpg',
-        '55-330x361.jpg', '56-330x361.jpg', '62-330x361.jpg', '63-330x361.jpg',
-        '66-330x361.jpg', '67-330x361.jpg', 'Hussain-rehar1536x1198.jpg'
-      ];
-      $stmt = $pdo->query("SELECT * FROM products LIMIT 8");
-      $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
-      foreach ($products as $product):
-        $prodImg = $babuiImages[array_rand($babuiImages)];
-      ?>
-        <div class="product elementor-widget" style="background: #fff; border-radius: 16px; box-shadow: 0 2px 16px rgba(0,0,0,0.07); padding: 28px 18px; text-align: center; transition: box-shadow 0.2s; position: relative;">
-          <img src="images/<?php echo htmlspecialchars($prodImg, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?>" style="max-width: 100%; height: 160px; object-fit: cover; border-radius: 10px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-          <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; color: #222; font-family: 'Outfit', sans-serif; letter-spacing: 1px;"><?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?></h3>
-          <p style="font-size: 1rem; color: #555; margin-bottom: 0; min-height: 32px;"><?php echo htmlspecialchars($product['description'], ENT_QUOTES, 'UTF-8'); ?></p>
-          <div style="font-size: 1.1rem; color: #1a8917; font-weight: 600; margin-top: 10px;">$<?php echo number_format($product['price'], 2); ?></div>
-        </div>
-      <?php endforeach; ?>
-    </div>
-  </div>
-</div>
-<script>
-// Smooth scroll for Explore Products button
-document.querySelectorAll('.btn.elementor-button').forEach(function(btn){
-  btn.addEventListener('click', function(e){
-    e.preventDefault();
-    document.getElementById('products').scrollIntoView({behavior: 'smooth'});
-  });
-});
-// Product card hover effect
-document.querySelectorAll('.product.elementor-widget').forEach(function(card){
-  card.addEventListener('mouseenter', function(){
-    card.style.boxShadow = '0 6px 32px rgba(0,0,0,0.12)';
-  });
-  card.addEventListener('mouseleave', function(){
-    card.style.boxShadow = '0 2px 16px rgba(0,0,0,0.07)';
-  });
-});
-</script>
-
-<?php require __DIR__ . '/includes/footer.php'; ?>
 
