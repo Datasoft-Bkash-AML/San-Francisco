@@ -72,6 +72,32 @@ San-Francisco/
 - Update JavaScript interactions in `js/script.js`.
 - Add or modify categories and products via the `database.sql` or directly in MySQL.
 
+## Demo data & seeding (local images and featured flag)
+
+- This repository includes a small CLI seeder at `scripts/seed_products.php` which will create the demo categories (Headphones, Speakers, Accessories) and populate each with 10–15 deterministic products.
+- The seeder now uses local images from the `images/` folder so the site renders reliably without external network calls. It also creates a `featured` column on the `products` table (if missing) and flags a few demo products as featured.
+
+How to run the seeder (CLI):
+
+```bash
+php scripts/seed_products.php
+```
+
+What this does:
+- Ensures a `featured` column exists (SQLite/MySQL compatible ALTER).
+- Ensures the three categories exist.
+- Inserts or updates products with local image filenames (examples: `product-a.jpg`, `2-936x1024.jpg`).
+
+Admin UI:
+- There is a "Seed Demo Products" button in the admin panel at `/admin/index.php` (requires admin login). That button triggers the same seeder logic from the web UI.
+- The admin add/edit product form includes a "Featured" checkbox so you can toggle items manually.
+
+Notes:
+- If you previously seeded products using external URLs, running the seeder again will update image references to the local filenames used by the seeder.
+- If your images folder is missing any of the filenames referenced by the seeder, the frontend will fall back to placeholders; add matching images to `images/` for full fidelity.
+
+If you'd like me to also download a curated set of CC0 images into `images/` and re-run the seeder to use those, tell me and I'll add that next.
+
 ---
 
 © 2025 San Francisco Demo
