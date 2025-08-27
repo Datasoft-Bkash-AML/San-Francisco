@@ -53,6 +53,7 @@ $currentCat = isset($_GET['category']) ? (int)$_GET['category'] : null;
         <script src="js/c-rey-template.js"></script>
         <script src="js/c-general.js"></script>
         <script src="js/c-helpers.js"></script>
+        <script src="js/api-widgets.js"></script>
     <!-- Load main and Babui-dynamic JS files after core -->
     <script src="js/script.js"></script>
     <script src="js/frontend-script.js"></script>
@@ -80,11 +81,26 @@ $currentCat = isset($_GET['category']) ? (int)$_GET['category'] : null;
                 </ul>
             </nav>
             <div class="header-icons" style="display: flex; gap: 24px; align-items: center; font-size: 1.4rem; color: #222;">
-                <span title="Search" style="cursor:pointer;">&#128269;</span>
-                <span title="Account" style="cursor:pointer;">&#128100;</span>
-                <span title="Wishlist" style="cursor:pointer;">&#10084;</span>
-                <span title="Cart" style="cursor:pointer;">&#128722;</span>
+                <span title="Search" style="cursor:pointer;" data-open="search">&#128269;</span>
+                <span title="Account" style="cursor:pointer;" data-open="account">&#128100;</span>
+                <span title="Wishlist" style="cursor:pointer; position:relative" data-open="wishlist">&#10084;
+                    <span id="header-wishlist-count" style="position:absolute; top:-8px; right:-10px; background:#b76e79; color:#fff; font-size:12px; padding:2px 6px; border-radius:12px; display:none">0</span>
+                </span>
+                <span title="Cart" style="cursor:pointer; position:relative" data-open="cart">&#128722;
+                    <span id="header-cart-count" style="position:absolute; top:-8px; right:-10px; background:#222; color:#fff; font-size:12px; padding:2px 6px; border-radius:12px; display:none">0</span>
+                </span>
                 <span title="Lightning" style="cursor:pointer;">&#9889;</span>
             </div>
         </div>
     </header>
+    <!-- Off-canvas panels for cart and wishlist -->
+    <div id="offcanvas-panels">
+        <div id="panel-cart" style="position:fixed;right:18px;top:80px;width:360px;max-width:90%;background:#fff;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,0.12);display:none;z-index:1200;padding:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><strong>Your cart</strong><button id="panel-cart-close" style="background:none;border:none;font-size:16px;cursor:pointer">✕</button></div>
+            <div id="panel-cart-body">Loading…</div>
+        </div>
+        <div id="panel-wishlist" style="position:fixed;right:18px;top:80px;width:360px;max-width:90%;background:#fff;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,0.12);display:none;z-index:1200;padding:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><strong>Your wishlist</strong><button id="panel-wishlist-close" style="background:none;border:none;font-size:16px;cursor:pointer">✕</button></div>
+            <div id="panel-wishlist-body">Loading…</div>
+        </div>
+    </div>

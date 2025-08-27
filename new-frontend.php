@@ -5,6 +5,73 @@
 // new-frontend.php: Rey-style landing page for demo and migration
 require __DIR__ . '/config.php';
 require __DIR__ . '/includes/header.php';
+
+// Fetch one representative product per desired category (Headphones, Speakers, Accessories)
+$desiredCats = ['Headphones','Speakers','Accessories'];
+$featured = [];
+try {
+  $placeholders = rtrim(str_repeat('?,', count($desiredCats)), ',');
+  // find category ids/rowids for the desired category names
+  $catStmt = $pdo->prepare("SELECT id, rowid, name FROM categories WHERE name IN ($placeholders)");
+  $catStmt->execute($desiredCats);
+  $catMap = [];
+  while ($r = $catStmt->fetch(PDO::FETCH_ASSOC)) {
+    $catMap[$r['name']] = !empty($r['id']) ? (int)$r['id'] : (int)$r['rowid'];
+  }
+  // For each desired category, pick the latest product
+  foreach ($desiredCats as $dc) {
+    if (!isset($catMap[$dc])) continue;
+    $cid = $catMap[$dc];
+    // Prefer featured product for this category
+    $pstmt = $pdo->prepare('SELECT p.id, p.name, p.description, p.image, ? AS category_name FROM products p WHERE p.category_id = ? AND p.featured = 1 ORDER BY p.rowid DESC LIMIT 1');
+    $pstmt->execute([$dc, $cid]);
+    $row = $pstmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row) {
+      // fallback to latest product
+      $pstmt = $pdo->prepare('SELECT p.id, p.name, p.description, p.image, ? AS category_name FROM products p WHERE p.category_id = ? ORDER BY p.rowid DESC LIMIT 1');
+      $pstmt->execute([$dc, $cid]);
+      $row = $pstmt->fetch(PDO::FETCH_ASSOC);
+    }
+    if ($row) $featured[] = $row;
+  }
+} catch (Exception $e) {
+  // leave $featured empty and the template below will use sensible defaults
+}
+
+// Helper to safely echo values with fallback
+function esc($v, $fallback = '') {
+  if (empty($v) && $fallback !== '') return $fallback;
+  return htmlspecialchars((string)($v ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
+// Provide three slots with defaults (left, center, right)
+$slot = [];
+for ($i = 0; $i < 3; $i++) {
+  $row = $featured[$i] ?? null;
+    if ($row) {
+    $imgFile = $row['image'] ?: 'product-a.jpg';
+    // If image looks like a URL, use it directly; otherwise treat as local file under /images
+    if (preg_match('#^https?://#i', $imgFile)) {
+      $imgSrc = $imgFile;
+    } else {
+      $imgSrc = 'images/' . basename($imgFile);
+    }
+    $slot[$i] = [
+      'image' => $imgSrc,
+      'title' => $row['name'] ?: 'Featured Product',
+      'subtitle' => $row['category_name'] ?: '',
+      'description' => $row['description'] ?: '',
+    ];
+  } else {
+    // sensible defaults pointing to existing images in the repo
+    $defaults = [
+      ['image' => 'images/2-936x1024.jpg', 'title' => "Innovative, wireless home\nspeaker", 'subtitle' => '', 'description' => ''],
+      ['image' => 'images/13-330x361.jpg', 'title' => 'The future of health is\non your wrist', 'subtitle' => 'APPLE WATCH 8 SERIES', 'description' => ''],
+      ['image' => 'images/25-330x361.jpg', 'title' => 'With active noise\ncancelling', 'subtitle' => 'EB 3RD GEN', 'description' => ''],
+    ];
+    $slot[$i] = $defaults[$i];
+  }
+}
 ?>
 
 
@@ -14,18 +81,18 @@ require __DIR__ . '/includes/header.php';
   <div class="rey-hero-grid" style="display: grid; grid-template-columns: 2fr 1.2fr 1fr; gap: 28px; max-width: 1400px; margin: 0 auto; align-items: stretch;">
     <!-- Left: Large Feature (dark background, bold white text) -->
     <div style="background: #232323; border-radius: 22px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; min-height: 480px; position: relative; box-shadow: 0 2px 16px rgba(0,0,0,0.10);">
-      <img src="images/2-936x1024.jpg" alt="Innovative, wireless home speaker" style="width: 100%; height: 340px; object-fit: cover; filter: brightness(0.85);">
+      <img src="<?php echo esc($slot[0]['image']); ?>" alt="<?php echo esc(str_replace("\n", ' ', $slot[0]['title'])); ?>" style="width: 100%; height: 340px; object-fit: cover; filter: brightness(0.85);">
       <div style="padding: 40px 40px 36px 40px; position: absolute; left: 0; bottom: 0; width: 100%;">
-        <h2 style="font-family: 'Outfit', sans-serif; font-size: 2.6rem; font-weight: 900; color: #fff; margin-bottom: 18px; line-height: 1.1;">Innovative, wireless home<br>speaker</h2>
+        <h2 style="font-family: 'Outfit', sans-serif; font-size: 2.6rem; font-weight: 900; color: #fff; margin-bottom: 18px; line-height: 1.1;"><?php echo nl2br(esc($slot[0]['title'])); ?></h2>
         <a href="#" style="font-size: 1.1rem; font-weight: 700; color: #fff; text-decoration: none; border-bottom: 2px solid #fff; padding-bottom: 2px; letter-spacing: 1px;">Discover &rarr;</a>
       </div>
     </div>
     <!-- Center: Apple Watch Card (black background, white text, product image) -->
     <div style="background: #181818; border-radius: 22px; color: #fff; display: flex; flex-direction: column; justify-content: flex-end; min-height: 480px; position: relative; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
-      <img src="images/13-330x361.jpg" alt="Apple Watch" style="width: 70%; height: 220px; object-fit: contain; margin: 40px auto 0 auto; display: block;">
+      <img src="<?php echo esc($slot[1]['image']); ?>" alt="<?php echo esc(str_replace("\n", ' ', $slot[1]['title'])); ?>" style="width: 70%; height: 220px; object-fit: contain; margin: 40px auto 0 auto; display: block;">
       <div style="padding: 40px 40px 36px 40px;">
-        <div style="font-size: 1rem; color: #bbb; margin-bottom: 8px; letter-spacing: 1px;">APPLE WATCH 8 SERIES</div>
-        <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 900; color: #fff; margin-bottom: 18px; line-height: 1.15;">The future of health is<br>on your wrist</h3>
+        <div style="font-size: 1rem; color: #bbb; margin-bottom: 8px; letter-spacing: 1px;"><?php echo esc($slot[1]['subtitle']); ?></div>
+        <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 900; color: #fff; margin-bottom: 18px; line-height: 1.15;"><?php echo nl2br(esc($slot[1]['title'])); ?></h3>
         <a href="#" style="font-size: 1.1rem; font-weight: 700; color: #fff; text-decoration: none; border-bottom: 2px solid #fff; padding-bottom: 2px; letter-spacing: 1px;">Discover &rarr;</a>
       </div>
     </div>
@@ -44,10 +111,10 @@ require __DIR__ . '/includes/header.php';
       </div>
       <!-- Promo Card -->
       <div style="background: #fff; border-radius: 22px; flex: 1 1 0; display: flex; flex-direction: column; justify-content: flex-end; position: relative; box-shadow: 0 2px 16px rgba(0,0,0,0.08); min-height: 180px;">
-        <img src="images/25-330x361.jpg" alt="With active noise cancelling" style="width: 100%; height: 120px; object-fit: cover; border-radius: 22px 22px 0 0;">
+        <img src="<?php echo esc($slot[2]['image']); ?>" alt="<?php echo esc(str_replace("\n", ' ', $slot[2]['title'])); ?>" style="width: 100%; height: 120px; object-fit: cover; border-radius: 22px 22px 0 0;">
         <div style="padding: 24px 32px 20px 32px;">
-          <div style="font-size: 0.95rem; color: #888; margin-bottom: 6px; font-weight: 700; letter-spacing: 1px;">EB 3RD GEN</div>
-          <h4 style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 900; color: #222; margin-bottom: 0; line-height: 1.2;">With active noise<br>cancelling</h4>
+          <div style="font-size: 0.95rem; color: #888; margin-bottom: 6px; font-weight: 700; letter-spacing: 1px;"><?php echo esc($slot[2]['subtitle']); ?></div>
+          <h4 style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 900; color: #222; margin-bottom: 0; line-height: 1.2;"><?php echo nl2br(esc($slot[2]['title'])); ?></h4>
         </div>
       </div>
     </div>

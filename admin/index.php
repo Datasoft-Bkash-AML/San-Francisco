@@ -58,15 +58,18 @@ if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
         $name = $_POST['name'] ?? '';
         $description = $_POST['description'] ?? '';
         $category_id = isset($_POST['category_id']) && $_POST['category_id'] !== '' ? intval($_POST['category_id']) : null;
+        $featuredFlag = isset($_POST['featured']) && $_POST['featured'] ? 1 : 0;
 
         if ($action === 'add') {
-            $stmt = $pdo->prepare('INSERT INTO products (name, description, category_id) VALUES (?, ?, ?)');
-            $stmt->execute([$name, $description, $category_id]);
+            $price = isset($_POST['price']) ? (float)$_POST['price'] : 0.0;
+            $stmt = $pdo->prepare('INSERT INTO products (name, description, category_id, price) VALUES (?, ?, ?, ?)');
+            $stmt->execute([$name, $description, $category_id, $price]);
             $productId = $pdo->lastInsertId();
         } else {
             $productId = intval($_POST['id']);
-            $stmt = $pdo->prepare('UPDATE products SET name = ?, description = ?, category_id = ? WHERE id = ?');
-            $stmt->execute([$name, $description, $category_id, $productId]);
+            $price = isset($_POST['price']) ? (float)$_POST['price'] : 0.0;
+            $stmt = $pdo->prepare('UPDATE products SET name = ?, description = ?, category_id = ?, featured = ?, price = ? WHERE id = ?');
+            $stmt->execute([$name, $description, $category_id, $featuredFlag, $price, $productId]);
         }
 
         // Handle upload or existing image selection
@@ -84,7 +87,12 @@ if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
             }
         }
 
-        // If no upload, allow selecting an existing image name from the select box
+        // If no upload, allow an explicit image URL
+        if (!$chosenImage && !empty($_POST['image_url']) && preg_match('#^https?://#i', $_POST['image_url'])) {
+            $chosenImage = $_POST['image_url'];
+        }
+
+        // If still no image, allow selecting an existing image name from the select box (local file)
         if (!$chosenImage && !empty($_POST['existing_image'])) {
             $candidate = basename($_POST['existing_image']);
             if (file_exists(__DIR__ . '/../images/' . $candidate)) {
@@ -95,6 +103,11 @@ if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
         if ($chosenImage) {
             $stmt = $pdo->prepare('UPDATE products SET image = ? WHERE id = ?');
             $stmt->execute([$chosenImage, $productId]);
+        }
+        // Ensure featured is set for newly inserted product as well
+        if ($action === 'add') {
+            $stmt = $pdo->prepare('UPDATE products SET featured = ? WHERE id = ?');
+            $stmt->execute([$featuredFlag, $productId]);
         }
 
         header('Location: /admin/index.php');
@@ -113,6 +126,42 @@ if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
         }
         $stmt = $pdo->prepare('DELETE FROM products WHERE id = ?');
         $stmt->execute([$id]);
+        header('Location: /admin/index.php');
+        exit;
+    }
+
+    if ($action === 'seed_products') {
+        // Seed categories and products programmatically (similar to scripts/seed_products.php)
+        $categories = ['Headphones','Speakers','Accessories'];
+        $catIds = [];
+        foreach ($categories as $c) {
+                // Fetch numeric id if present, otherwise use rowid
+                $stmt = $pdo->prepare('SELECT id, rowid FROM categories WHERE name = ? ORDER BY rowid DESC LIMIT 1');
+                $stmt->execute([$c]);
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($row) {
+                    $catIds[$c] = !empty($row['id']) ? (int)$row['id'] : (int)$row['rowid'];
+                } else {
+                    $stmt = $pdo->prepare('INSERT INTO categories (name) VALUES (?)');
+                    $stmt->execute([$c]);
+                    $last = $pdo->query('SELECT rowid FROM categories ORDER BY rowid DESC LIMIT 1')->fetch(PDO::FETCH_ASSOC);
+                    $catIds[$c] = (int)$last['rowid'];
+                }
+        }
+        $seed = [];
+    for ($i = 1; $i <= 12; $i++) $seed[] = ['category'=>'Headphones','name'=>"Studio Headphones H-{$i}",'description'=>"High-fidelity studio headphones model H-{$i} with detailed sound and comfortable fit.",'image'=>'product-a.jpg','price'=> round(49 + ($i*8) + (($i%3)*5),2)];
+    for ($i = 1; $i <= 12; $i++) $seed[] = ['category'=>'Speakers','name'=>"Home Speaker S-{$i}",'description'=>"Compact home speaker S-{$i} delivering rich bass and clear mids.",'image'=>'product-b.jpg','price'=> round(79 + ($i*10) + (($i%2)*7),2)];
+    for ($i = 1; $i <= 12; $i++) $seed[] = ['category'=>'Accessories','name'=>"Accessory A-{$i}",'description'=>"Accessory A-{$i} for your devices.",'image'=>'product-c.jpg','price'=> round(9 + ($i*3) + (($i%4)*2),2)];
+
+        foreach ($seed as $p) {
+            $catId = $catIds[$p['category']];
+            $exists = $pdo->prepare('SELECT id FROM products WHERE name = ?');
+            $exists->execute([$p['name']]);
+            if ($exists->fetch()) continue;
+            $price = isset($p['price']) ? $p['price'] : 0.0;
+            $stmt = $pdo->prepare('INSERT INTO products (category_id, name, description, image, price) VALUES (?, ?, ?, ?, ?)');
+            $stmt->execute([$catId, $p['name'], $p['description'], $p['image'], $price]);
+        }
         header('Location: /admin/index.php');
         exit;
     }
@@ -184,8 +233,18 @@ if (isset($_GET['edit'])) {
         <input type="hidden" name="csrf" value="<?=htmlspecialchars(csrf_token())?>">
         <button type="submit">Logout</button>
     </form>
+    <form method="post" style="float:right;margin-right:8px">
+        <input type="hidden" name="action" value="seed_products">
+        <input type="hidden" name="csrf" value="<?=htmlspecialchars(csrf_token())?>">
+        <button type="submit">Seed Demo Products</button>
+    </form>
 
     <h2>Add / Edit Product</h2>
+    <form id="admin-upload-form" method="post" enctype="multipart/form-data" style="margin-bottom:8px">
+        <input type="hidden" name="csrf" value="<?=htmlspecialchars(csrf_token())?>">
+        <input type="file" name="image" accept="image/jpeg,image/png">
+        <button type="submit">Upload Image (AJAX)</button>
+    </form>
     <form method="post" enctype="multipart/form-data">
         <input type="hidden" name="action" value="<?=htmlspecialchars($formAction)?>">
         <input type="hidden" name="csrf" value="<?=htmlspecialchars(csrf_token())?>">
@@ -202,10 +261,13 @@ if (isset($_GET['edit'])) {
                 } ?>
             </select>
             <input type="file" name="image" accept="image/jpeg,image/png">
+            <input type="text" name="image_url" placeholder="Or image URL (https://...)" style="min-width:220px" value="<?=htmlspecialchars($formValues['image'] ?? '')?>">
             <select name="existing_image">
                 <option value="">Or choose existing image</option>
                 <?php foreach ($imageFiles as $img) echo '<option value="'.htmlspecialchars($img).'">'.htmlspecialchars($img).'</option>'; ?>
             </select>
+            <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" name="featured" value="1" <?=isset($editing) && !empty($editing['featured']) ? 'checked' : ''?>> Featured</label>
+            <input type="number" step="0.01" name="price" placeholder="Price (e.g. 49.99)" value="<?=isset($editing['price']) ? htmlspecialchars($editing['price']) : ''?>" style="width:120px">
             <button type="submit"><?=htmlspecialchars($submitLabel)?></button>
             <?php if ($formAction === 'edit'): ?>
                 <a href="index.php" style="margin-left:8px;align-self:center">Cancel</a>
@@ -215,27 +277,43 @@ if (isset($_GET['edit'])) {
     </form>
 
     <h2>Products</h2>
-    <table>
-    <thead><tr><th>ID</th><th>Name</th><th>Image</th><th>Actions</th></tr></thead>
-        <tbody>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:12px">
         <?php foreach ($products as $p): ?>
-            <tr>
-                <td><?=htmlspecialchars($p['id'])?></td>
-                <td><?=htmlspecialchars($p['name'])?></td>
-                <td><?php if (!empty($p['image'])): ?><img src="/images/<?=htmlspecialchars($p['image'])?>" style="height:48px"> <?php else: ?>—<?php endif; ?></td>
-                <td>
+            <div style="background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.06);overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:8px">
+                <div style="height:160px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fafafa;border-radius:8px">
+                    <?php if (!empty($p['image'])): 
+                        $imgSrc = preg_match('#^https?://#i',$p['image']) ? $p['image'] : '/images/'.htmlspecialchars($p['image']);
+                    ?>
+                        <img src="<?=$imgSrc?>" style="max-width:100%;max-height:100%;object-fit:cover">
+                    <?php else: ?>
+                        <div style="color:#999">No image</div>
+                    <?php endif; ?>
+                </div>
+                <div style="font-weight:800;font-family:'Outfit',sans-serif;"><?=htmlspecialchars($p['name'])?></div>
+                <div style="font-size:0.9rem;color:#666"><?php
+                    $catName = '';
+                    foreach ($cats as $c) if ($c['id']==$p['category_id']) { $catName = $c['name']; break; }
+                    echo htmlspecialchars($catName);
+                ?></div>
+                <div style="font-size:1rem;color:#222;font-weight:700">$<?=htmlspecialchars(isset($p['price']) ? number_format($p['price'],2) : '0.00')?></div>
+                <?php if (!empty($p['featured'])): ?>
+                    <div style="color:#b76e79;font-weight:700">FEATURED</div>
+                <?php endif; ?>
+                <div style="flex:1;color:#444;font-size:0.9rem"><?=htmlspecialchars(mb_strimwidth($p['description'] ?? '',0,120,'...'))?></div>
+                <div style="display:flex;gap:8px;align-items:center">
                     <a href="?edit=<?=htmlspecialchars($p['id'])?>">Edit</a>
+                    <button data-feature-toggle data-product-id="<?=htmlspecialchars($p['id'])?>" data-featured="<?=!empty($p['featured']) ? '1' : '0'?>" data-csrf="<?=htmlspecialchars(csrf_token())?>" style="margin-left:8px"><?=!empty($p['featured']) ? '★ Featured' : '☆ Feature'?></button>
                     <form method="post" style="display:inline;margin-left:8px">
                         <input type="hidden" name="action" value="delete">
                         <input type="hidden" name="id" value="<?=htmlspecialchars($p['id'])?>">
                         <input type="hidden" name="csrf" value="<?=htmlspecialchars(csrf_token())?>">
                         <button type="submit" onclick="return confirm('Delete?')">Delete</button>
                     </form>
-                </td>
-            </tr>
+                </div>
+            </div>
         <?php endforeach; ?>
-        </tbody>
-    </table>
+    </div>
 </div>
 </body>
+<script src="/js/admin-widgets.js"></script>
 </html>
