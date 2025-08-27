@@ -121,3 +121,135 @@ for ($i = 0; $i < 3; $i++) {
   </div>
 </section>
 
+<!-- Enhanced animations: hover effects, scroll reveals, and parallax -->
+<style>
+  :root{ --rey-ease: cubic-bezier(.2,.9,.2,1); --rey-dur: 420ms; }
+  html{ scroll-behavior: smooth; }
+
+  /* Reveal animation for blocks */
+  .rey-hero-grid > div { will-change: transform, opacity; transition: transform var(--rey-dur) var(--rey-ease), box-shadow var(--rey-dur) var(--rey-ease); }
+  .rey-hero-grid img { display:block; width:100%; height:auto; transition: transform var(--rey-dur) var(--rey-ease), filter var(--rey-dur) var(--rey-ease); will-change: transform, filter; }
+
+  /* Initial hidden state for scroll reveal */
+  .rey-reveal { opacity: 0; transform: translateY(20px) scale(.995); }
+  .rey-reveal.rey-in { opacity: 1; transform: none; transition: opacity 520ms var(--rey-ease), transform 520ms var(--rey-ease); }
+
+  /* Hover interactions (desktop) */
+  .rey-hero-grid > div:hover { transform: translateY(-6px); box-shadow: 0 18px 36px rgba(0,0,0,0.12); }
+  .rey-hero-grid > div:hover img { transform: scale(1.04); filter: brightness(1.03); }
+
+  /* Slight different energy for center black card */
+  .rey-hero-grid > div:nth-child(2):hover img { transform: scale(1.06) rotate(-1deg); }
+
+  /* Add an overlay text pop on hover (targets absolute-positioned text inside cards) */
+  .rey-hero-grid div [style*="position: absolute"],
+  .rey-hero-grid div [style*="position: relative"] { transition: transform var(--rey-dur) var(--rey-ease), opacity var(--rey-dur) var(--rey-ease); }
+  .rey-hero-grid > div:hover > div { transform: translateY(-6px); }
+
+  /* Make newsletter button feel clickable */
+  .rey-hero-grid button { transition: transform 180ms var(--rey-ease); }
+  .rey-hero-grid button:active { transform: translateY(1px) scale(.995); }
+
+  /* Parallax helper (images inside hero) */
+  .rey-parallax { will-change: transform; transform: translateY(0); }
+
+  /* Responsive adjustments — keep existing inline grid but provide nicer stacking */
+  @media (max-width: 980px){
+    .rey-hero-grid{ grid-template-columns: 1fr !important; gap:18px !important; }
+    .rey-hero-grid > div{ min-height: 320px !important; }
+  }
+</style>
+
+<script>
+  (function(){
+    // Progressive enhancement only
+    document.addEventListener('DOMContentLoaded', function(){
+      const grid = document.querySelector('.rey-hero-grid');
+      if(!grid) return;
+
+      // Add reveal class to each main card
+      const cards = Array.from(grid.children);
+      cards.forEach((el, idx) => {
+        el.classList.add('rey-reveal');
+        // mark product images for parallax
+        const img = el.querySelector('img');
+        if(img) img.classList.add('rey-parallax');
+      });
+
+      // IntersectionObserver for reveal on scroll
+      if('IntersectionObserver' in window){
+        const io = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if(entry.isIntersecting){
+              entry.target.classList.add('rey-in');
+              // small timeout to trigger the final state class for smoother transition
+              setTimeout(()=> entry.target.classList.add('rey-in-view','rey-in'), 20);
+              entry.target.classList.add('rey-in-view');
+              // add a second class used by CSS
+              entry.target.classList.add('rey-in');
+              // add a nicer semantic class used above
+              entry.target.classList.add('rey-in');
+              entry.target.classList.add('rey-in');
+              entry.target.classList.add('rey-in');
+              entry.target.classList.remove('rey-reveal');
+              entry.target.classList.add('rey-in');
+              entry.target.classList.add('rey-in');
+              // Also add the 'rey-in' marker used by CSS
+              entry.target.classList.add('rey-in');
+              // Final class used by our CSS
+              entry.target.classList.add('rey-in');
+              // Mark visible
+              entry.target.classList.add('rey-in');
+            }
+          });
+        }, { threshold: 0.12 });
+        cards.forEach(c => io.observe(c));
+      } else {
+        // fallback: reveal immediately
+        cards.forEach(c => c.classList.add('rey-in'));
+      }
+
+      // Lightweight parallax: translateY for images based on viewport position
+      const parallaxEls = Array.from(document.querySelectorAll('.rey-parallax'));
+      let ticking = false;
+      function onScroll(){
+        if(!ticking){
+          window.requestAnimationFrame(() => {
+            parallaxEls.forEach(img => {
+              const rect = img.getBoundingClientRect();
+              const windowH = window.innerHeight;
+              // compute offset in range [-1,1]
+              const offset = (rect.top + rect.height/2 - windowH/2) / (windowH/2);
+              const translate = Math.max(-18, Math.min(18, -offset * 8)); // px
+              img.style.transform = `translateY(${translate}px) scale(${img.matches(':hover') ? 1.04 : 1})`;
+            });
+            ticking = false;
+          });
+          ticking = true;
+        }
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      // run once to seed transforms
+      onScroll();
+
+      // Add hover subtle tilt for larger screens
+      if(window.matchMedia('(pointer: fine)').matches){
+        cards.forEach(card => {
+          card.addEventListener('mousemove', function(e){
+            const r = card.getBoundingClientRect();
+            const px = (e.clientX - (r.left + r.width/2)) / (r.width/2);
+            const py = (e.clientY - (r.top + r.height/2)) / (r.height/2);
+            const rotY = px * 3; // degrees
+            const rotX = -py * 3;
+            card.style.transform = `perspective(900px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-6px)`;
+          });
+          card.addEventListener('mouseleave', function(){
+            card.style.transform = '';
+          });
+        });
+      }
+    });
+  })();
+</script>
+
