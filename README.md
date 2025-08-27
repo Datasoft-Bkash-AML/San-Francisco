@@ -2,6 +2,11 @@
 
 This project replicates the San Francisco demo site using PHP and MySQL.
 
+## Environment Information
+
+- PHP Version: 8.3.14
+- MariaDB Version: 10.11.13
+
 ## Prerequisites
 
 - PHP 7.4+ with PDO extension
