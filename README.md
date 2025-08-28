@@ -4,13 +4,13 @@ This project replicates the San Francisco demo site using PHP and MySQL.
 
 ## Environment Information
 
-- PHP Version: 8.3.14
-- MariaDB Version: 10.11.13
+- PHP: Compatible with PHP 7.3+ (code has been kept compatible with macOS bundled PHP 7.3). Recommended: PHP 7.3–8.3 depending on your environment.
+- MariaDB/MySQL: tested with MySQL/MariaDB versions in the 5.7+/10.x range.
 
 ## Prerequisites
 
-- PHP 7.4+ with PDO extension
-- MySQL 5.7+ (or MariaDB)
+- PHP with PDO extension (7.3+ recommended)
+- MySQL 5.7+ (or MariaDB) OR the built-in SQLite fallback
 - Apache or another web server
 
 ## Setup Instructions
@@ -29,8 +29,43 @@ This project replicates the San Francisco demo site using PHP and MySQL.
    - This will create a database named `sanfrancisco` with the required tables.
 
 3. **Configure database connection**
-   - Open `config.php` in the project root.
-   - Update the variables `$host`, `$db`, `$user`, and `$pass` with your MySQL credentials.
+   You can configure database settings using environment variables or a `.env` file.
+
+   a) Using environment variables (recommended):
+
+   - Set `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_CHARSET`.
+   - If you want to force the app to use MySQL and not fall back to SQLite, set `PREFER_MYSQL=1`.
+
+   Example (macOS/Linux):
+   ```bash
+   export DB_HOST=192.168.14.252
+   export DB_PORT=3306
+   export DB_NAME=babui_test
+   export DB_USER=sohel
+   export DB_PASS='Remi@123'
+   export PREFER_MYSQL=1
+   php -S localhost:8000
+   ```
+
+   b) Using a `.env` file (convenient for local development):
+
+   - Copy the provided `.env.example` to `.env` and edit the values.
+   - The project contains a tiny `tools/dotenv.php` loader that will auto-load `.env` when present.
+
+   Example `.env` (copy from `.env.example`):
+   ```text
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_NAME=sanfrancisco
+   DB_USER=root
+   DB_PASS=
+   DB_CHARSET=utf8mb4
+   PREFER_MYSQL=0
+   ```
+
+   Notes:
+   - Environment variables override `.env` if both are present.
+   - With `PREFER_MYSQL=0` (default), the app attempts MySQL and will fall back to the included SQLite file `data/sanfrancisco.sqlite` if MySQL can't be reached.
 
 4. **Place product images**
    - Copy your product images into the `images/` directory.
@@ -101,3 +136,51 @@ If you'd like me to also download a curated set of CC0 images into `images/` and
 ---
 
 © 2025 San Francisco Demo
+
+## Local development: PHP 7.3 + MySQL (or SQLite fallback)
+
+This project is intentionally compatible with PHP 7.3 so you can run it on macOS or a lightweight Linux dev environment.
+
+Minimum/Recommended PHP settings and extensions
+- PHP 7.3+ (7.3 recommended to match macOS bundled CLI). Newer versions are also supported.
+- Enable PDO and the PDO MySQL driver (for MySQL) and PDO SQLite (for fallback). On Debian/Ubuntu packages are typically named php7.3-mysql and php7.3-sqlite.
+- Recommended php.ini settings for local dev (adjust path to your php.ini):
+
+   - display_errors = On
+   - error_reporting = E_ALL
+   - memory_limit = 256M
+   - date.timezone = UTC
+
+Logging and debugging
+- DB connection attempts and errors are logged to `logs/db.log` by the built-in development logger (`tools/logger.php`).
+- Control logging via env var `DB_LOG`:
+   - `DB_LOG=0` disables logging
+   - unset or `DB_LOG=1` enables logging (default)
+- Example: enable logging and start server
+```bash
+export DB_LOG=1
+php -S localhost:8000
+tail -f logs/db.log
+```
+
+Using MySQL locally
+- Example steps to run locally with MySQL and persistent DB:
+   1. Create a local MySQL database and user, then import schema:
+       ```bash
+       mysql -u root -p < database.sql
+       ```
+   2. Set env or `.env` values (see `.env.example`) and optionally `PREFER_MYSQL=1` to force use of MySQL.
+
+Git workflow and cloning
+- This repository includes a `.gitignore` entry for `.env`, `logs/`, and the local SQLite DB to avoid committing secrets or large generated files.
+- To clone and run locally:
+   ```bash
+   git clone <repository-url>
+   cd San-Francisco
+   cp .env.example .env    # edit .env with your local DB creds
+   php -S localhost:8000
+   ```
+
+Notes and troubleshooting
+- If you see `could not find driver` in `logs/db.log` it means the required PDO driver is missing from your PHP install. Install the appropriate PHP extension (e.g. php7.3-mysql) and restart.
+- The default behavior (`PREFER_MYSQL=0`) tries MySQL first and falls back to `data/sanfrancisco.sqlite` if MySQL is unreachable. Set `PREFER_MYSQL=1` to fail fast with MySQL-only behavior.

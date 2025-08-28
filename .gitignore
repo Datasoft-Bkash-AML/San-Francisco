@@ -1,0 +1,8 @@
+/.env
+/logs/
+/data/.initialized
+/data/sanfrancisco.sqlite
+.vscode/
+/.idea/
+node_modules/
+/.DS_Store
