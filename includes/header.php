@@ -16,6 +16,8 @@ $currentCat = isset($_GET['category']) ? (int)$_GET['category'] : null;
     <link rel="stylesheet" href="css/style.css">
     <!-- New frontend scaffold CSS -->
     <link rel="stylesheet" href="css/new-frontend.css">
+    <!-- Minimal replica CSS (branch: work/new-frontend-minimal) -->
+    <link rel="stylesheet" href="css/new-frontend-minimal.css">
     <!-- Babui-dynamic frontend CSS -->
     <link rel="stylesheet" href="css/frontend.min.css">
     <link rel="stylesheet" href="css/apple-webkit.min.css">
@@ -35,6 +37,8 @@ $currentCat = isset($_GET['category']) ? (int)$_GET['category'] : null;
         <script src="js/jquery.min.js"></script>
             <!-- New frontend scaffold JS -->
             <script src="js/new-frontend.js" defer></script>
+            <!-- Minimal replica JS (branch: work/new-frontend-minimal) -->
+            <script src="js/new-frontend-minimal.js" defer></script>
         <!-- Define reyParams global variable required by Rey theme scripts -->
         <script>
                             var reyParams = {

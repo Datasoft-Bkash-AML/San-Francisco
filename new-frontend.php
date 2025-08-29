@@ -5,6 +5,10 @@
 // new-frontend.php: Rey-style landing page for demo and migration
 require __DIR__ . '/config.php';
 require __DIR__ . '/includes/header.php';
+// If minimal header partial exists (used by the minimal replica branch), include it
+if (file_exists(__DIR__ . '/includes/header-partial-minimal.php')) {
+  require __DIR__ . '/includes/header-partial-minimal.php';
+}
 
 // Fetch one representative product per desired category (Headphones, Speakers, Accessories)
 $desiredCats = ['Headphones','Speakers','Accessories'];

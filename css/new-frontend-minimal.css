@@ -1,0 +1,11 @@
+/* Minimal header styles for the minimal replica branch */
+:root{ --brand-text: #222; --muted: #888; }
+.minimal-site-header{ background: transparent; }
+.minimal-header-inner{ padding: 14px 18px; }
+.minimal-main-nav a{ color:var(--brand-text); text-decoration:none; font-size:15px; }
+.minimal-header-icons a, .minimal-header-icons button{ color:var(--brand-text); font-size:16px; background:none; border:0; }
+.min-cart-count{ background:#e6e6e6; padding:2px 6px; border-radius:12px; font-size:12px; margin-left:6px; }
+@media (max-width:880px){
+  .minimal-main-nav{ display:none; }
+  .min-mobile-toggle{ display:block; }
+}
