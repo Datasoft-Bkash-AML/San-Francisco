@@ -55,7 +55,14 @@ if (!defined('ADMIN_PASS_HASH')) {
 // CSRF helper functions
 function csrf_token()
 {
-    if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        if (!headers_sent()) {
+            session_start();
+        } else {
+            if (function_exists('sf_log')) sf_log('app', 'csrf_token: headers already sent, session_start skipped');
+            return null;
+        }
+    }
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(24));
     }
@@ -64,14 +71,29 @@ function csrf_token()
 
 function csrf_check($token)
 {
-    if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        if (!headers_sent()) {
+            session_start();
+        } else {
+            if (function_exists('sf_log')) sf_log('app', 'csrf_check: headers already sent, session_start skipped');
+            return false;
+        }
+    }
     return hash_equals($_SESSION['csrf_token'] ?? '', $token ?? '');
 }
 
 // Session hardening
+// Session hardening
 if (session_status() !== PHP_SESSION_ACTIVE) {
-    ini_set('session.use_strict_mode', 1);
-    session_start();
+    if (!headers_sent()) {
+        // Safe to change session ini and start session
+        ini_set('session.use_strict_mode', 1);
+        session_start();
+    } else {
+        // Headers already sent; changing session ini or starting a session now can
+        // trigger warnings. Log and skip to avoid noisy output in the browser.
+        if (function_exists('sf_log')) sf_log('app', 'Headers already sent; skipping ini_set/session_start in config.php');
+    }
 }
 
 // Attempt MySQL connection; on failure fall back to SQLite
