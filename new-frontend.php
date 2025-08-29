@@ -195,61 +195,7 @@ for ($i = 0; $i < 3; $i++) {
               entry.target.classList.add('rey-in');
               entry.target.classList.add('rey-in');
               // Also add the 'rey-in' marker used by CSS
-              entry.target.classList.add('rey-in');
+  <!-- Styles and interaction logic moved to css/new-frontend.css and js/new-frontend.js -->
               // Final class used by our CSS
+
               entry.target.classList.add('rey-in');
-              // Mark visible
-              entry.target.classList.add('rey-in');
-            }
-          });
-        }, { threshold: 0.12 });
-        cards.forEach(c => io.observe(c));
-      } else {
-        // fallback: reveal immediately
-        cards.forEach(c => c.classList.add('rey-in'));
-      }
-
-      // Lightweight parallax: translateY for images based on viewport position
-      const parallaxEls = Array.from(document.querySelectorAll('.rey-parallax'));
-      let ticking = false;
-      function onScroll(){
-        if(!ticking){
-          window.requestAnimationFrame(() => {
-            parallaxEls.forEach(img => {
-              const rect = img.getBoundingClientRect();
-              const windowH = window.innerHeight;
-              // compute offset in range [-1,1]
-              const offset = (rect.top + rect.height/2 - windowH/2) / (windowH/2);
-              const translate = Math.max(-18, Math.min(18, -offset * 8)); // px
-              img.style.transform = `translateY(${translate}px) scale(${img.matches(':hover') ? 1.04 : 1})`;
-            });
-            ticking = false;
-          });
-          ticking = true;
-        }
-      }
-      window.addEventListener('scroll', onScroll, { passive: true });
-      window.addEventListener('resize', onScroll);
-      // run once to seed transforms
-      onScroll();
-
-      // Add hover subtle tilt for larger screens
-      if(window.matchMedia('(pointer: fine)').matches){
-        cards.forEach(card => {
-          card.addEventListener('mousemove', function(e){
-            const r = card.getBoundingClientRect();
-            const px = (e.clientX - (r.left + r.width/2)) / (r.width/2);
-            const py = (e.clientY - (r.top + r.height/2)) / (r.height/2);
-            const rotY = px * 3; // degrees
-            const rotX = -py * 3;
-            card.style.transform = `perspective(900px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-6px)`;
-          });
-          card.addEventListener('mouseleave', function(){
-            card.style.transform = '';
-          });
-        });
-      }
-    });
-  })();
-</script>
-
